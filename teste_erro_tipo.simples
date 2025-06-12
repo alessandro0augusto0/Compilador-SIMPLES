@@ -1,0 +1,9 @@
+programa
+inicio
+    inteiro a <- 5;
+    flutuante b <- 2.5;
+    inteiro c;
+
+    // A linha abaixo deve causar um erro semântico!
+    c <- a + b; 
+fim
