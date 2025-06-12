@@ -207,7 +207,46 @@ int main() {
 ## 🚀 Como Executar
 
 ### Pré-requisitos
-- Docker (instalação)
+
+<p align="center">
+    <a href="https://www.docker.com/">
+        <img src="https://skillicons.dev/icons?i=docker" />
+    </a>
+    <a href="https://code.visualstudio.com/">
+        <img src="https://skillicons.dev/icons?i=vscode" />
+    </a>
+    <a href="https://www.oracle.com/java/technologies/downloads/">
+        <img src="https://skillicons.dev/icons?i=java" />
+    </a>
+    <a href="https://git-scm.com/">
+        <img src="https://skillicons.dev/icons?i=git" />
+    </a>
+</p>
+<p align="center">
+    <a href="https://ant.apache.org/">
+        <img src="https://img.shields.io/badge/Apache%20Ant-Build-red?logo=apache-ant&logoColor=white" height="32" />
+    </a>
+</p>
+
+Antes de iniciar, certifique-se de ter os seguintes itens instalados/configurados em seu ambiente:
+
+- [Docker](https://www.docker.com/) (para ambiente de compilação isolado)
+- [Visual Studio Code (VSCode)](https://code.visualstudio.com/) ou outra IDE compatível com Java
+- [Java JDK 17+](https://adoptium.net/pt/temurin/releases/?version=17) (para desenvolvimento e execução local)
+- [Apache Ant](https://ant.apache.org/) (para automatizar o build do projeto)
+- [Git](https://git-scm.com/) (para clonar o repositório)
+- (Opcional) Extensões recomendadas para VSCode: Java Extension Pack, Docker, GitLens
+
+#### Como este projeto foi criado
+
+Este projeto foi desenvolvido como trabalho final da disciplina de Compiladores, utilizando as seguintes etapas e ferramentas:
+
+1. **Configuração do ambiente Java**: Estruturação do projeto em Java 17.
+2. **Definição da gramática**: Utilização do JFlex para análise léxica e CUP para análise sintática.
+3. **Automação do build**: Criação de scripts com Apache Ant para facilitar a compilação.
+4. **Containerização**: Uso do Docker para garantir portabilidade e reprodutibilidade do ambiente.
+5. **Testes e exemplos**: Inclusão de arquivos de teste e exemplos práticos para validação do compilador.
+6. **Documentação**: Elaboração deste README para orientar o uso e a contribuição.
 
 ### Passo a Passo
 #### 1. Clone o Repositório
@@ -346,3 +385,10 @@ C:.
 ## 📄 Licença
 
 Distribuído sob licença MIT. Veja [LICENSE](LICENSE) para detalhes.
+
+### 👨‍💻 IDEs & Ferramentas de Desenvolvimento
+<p align="center">
+  <a href="https://skillicons.dev">
+    <img src="https://skillicons.dev/icons?i=vscode,idea,eclipse,phpstorm,pycharm,git,github,figma,pr,docker" />
+  </a>
+</p>
