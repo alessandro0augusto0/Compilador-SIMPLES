@@ -1,0 +1,62 @@
+<project name="CompiladorSimples" default="main">
+
+    <property name="src.dir" value="src"/>
+    <property name="build.dir" value="build"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="jar.dir" value="${build.dir}/jar"/>
+    <property name="cup.file" value="cups/simples.cup"/>
+    <property name="flex.file" value="flex/simples.flex"/>
+    <property name="lib.dir" value="lib"/>
+
+    <path id="classpath">
+        <fileset dir="${lib.dir}" includes="**/*.jar"/>
+    </path>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+
+    <target name="init">
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${classes.dir}"/>
+        <mkdir dir="${jar.dir}"/>
+    </target>
+
+    <target name="jflex" depends="init">
+        <java classname="jflex.Main" fork="true">
+             <arg value="-d"/>
+             <arg value="${src.dir}"/>
+             <arg value="${flex.file}"/>
+             <classpath refid="classpath"/>
+        </java>
+    </target>
+
+    <target name="cup" depends="init">
+        <java classname="java_cup.Main" fork="true">
+            <arg value="-parser"/>
+            <arg value="parser"/>
+            <arg value="-symbols"/>
+            <arg value="sym"/>
+            <arg value="-destdir"/>
+            <arg value="${src.dir}"/>
+            <arg value="${cup.file}"/>
+            <classpath refid="classpath"/>
+        </java>
+    </target>
+
+    <target name="compile" depends="jflex, cup">
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" includeantruntime="false" encoding="UTF-8"/>
+    </target>
+
+    <target name="jar" depends="compile">
+        <jar destfile="${jar.dir}/simples-compiler.jar" basedir="${classes.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="CompiladorSimples"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="main" depends="clean, jar">
+        <echo>Build finalizado. JAR criado em ${jar.dir}/simples-compiler.jar</echo>
+    </target>
+</project>

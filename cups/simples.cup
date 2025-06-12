@@ -1,0 +1,186 @@
+import java_cup.runtime.*;
+import java.util.*;
+import java.util.Deque;
+import java.util.ArrayDeque;
+
+parser code {:
+    public void report_error(String message, Object info) {
+        StringBuilder m = new StringBuilder(">> Erro de Sintaxe");
+        if (info instanceof java_cup.runtime.Symbol) {
+            java_cup.runtime.Symbol s = ((java_cup.runtime.Symbol) info);
+            if (s.left >= 0) m.append(" na linha "+(s.left+1)+", coluna "+(s.right+1));
+        }
+        m.append(": ").append(message);
+        System.err.println(m);
+    }
+    public void report_fatal_error(String message, Object info) { report_error(message, info); throw new RuntimeException("Erro Fatal"); }
+    private StringBuilder mainCode = new StringBuilder(), functionsCode = new StringBuilder();
+    private boolean parsingFunction = false; 
+    class TabelaSimbolo {
+        String tipo; boolean ehVetor;
+        TabelaSimbolo(String t, boolean v) { this.tipo = t; this.ehVetor = v; }
+        public String getTipo() { return tipo; }
+        public boolean getEhVetor() { return ehVetor; }
+    }
+    private Hashtable<String, TabelaSimbolo> dicionario = new Hashtable<>();
+    private Deque<String> pilhaAuxiliar = new ArrayDeque<>();
+    private int indent_level = 1;
+    private StringBuilder getBuffer() { return parsingFunction ? functionsCode : mainCode; }
+    private void indent() { for(int i=0; i<indent_level*4; i++) getBuffer().append(" "); }
+    public void emit_final_code() {
+        System.out.println("#include <stdio.h>\n#include <stdlib.h>\n");
+        System.out.print(functionsCode.toString());
+        System.out.println("int main() {");
+        System.out.print(mainCode.toString());
+        System.out.println("    return 0;\n}");
+    }
+    public void checarVariavelNaoDeclarada(String id) {
+        if (id == null || id.matches("-?\\d+(\\.\\d+)?") || id.startsWith("\"")) return;
+        String idBase = id.contains("[") ? id.substring(0, id.indexOf('[')) : id;
+        if (!dicionario.containsKey(idBase)) report_fatal_error("Variavel '" + idBase + "' nao declarada.", null);
+    }
+    public void checarUsoCorretoVetores(String id) {
+        if (id == null || id.matches("-?\\d+(\\.\\d+)?") || id.startsWith("\"")) return;
+        checarVariavelNaoDeclarada(id);
+        String idBase = id.contains("[") ? id.substring(0, id.indexOf('[')) : id;
+        TabelaSimbolo t1 = dicionario.get(idBase);
+        if (t1.getEhVetor() && !id.contains("[")) report_fatal_error("Variavel '" + id + "' e um vetor e precisa de indice.", null);
+        if (!t1.getEhVetor() && id.contains("[")) report_fatal_error("Variavel '" + id + "' nao e um vetor.", null);
+    }
+    // Cole esta versão corrigida no lugar da sua função checkExpr antiga
+public String checkExpr(String e1, String e2) {
+    String tipoE1 = "", tipoE2 = "";
+
+    // Processa o primeiro operando, se ele não for nulo
+    if (e1 != null) {
+        checarUsoCorretoVetores(e1);
+        String e1Base = e1.contains("[") ? e1.substring(0, e1.indexOf('[')) : e1;
+        if (dicionario.containsKey(e1Base)) {
+            tipoE1 = dicionario.get(e1Base).getTipo();
+        } else if (e1.matches("-?\\d+")) {
+            tipoE1 = "INT";
+        } else if (e1.matches("-?\\d+\\.\\d+")) {
+            tipoE1 = "FLOAT";
+        }
+    }
+
+    // Processa o segundo operando, se ele não for nulo
+    if (e2 != null) {
+        checarUsoCorretoVetores(e2);
+        String e2Base = e2.contains("[") ? e2.substring(0, e2.indexOf('[')) : e2;
+        if (dicionario.containsKey(e2Base)) {
+            tipoE2 = dicionario.get(e2Base).getTipo();
+        } else if (e2.matches("-?\\d+")) {
+            tipoE2 = "INT";
+        } else if (e2.matches("-?\\d+\\.\\d+")) {
+            tipoE2 = "FLOAT";
+        }
+    }
+    
+    // Compara os tipos apenas se ambos existirem
+    if (!tipoE1.isEmpty() && !tipoE2.isEmpty() && !tipoE1.equals(tipoE2)) {
+        report_fatal_error("Tipos incompativeis na expressao: " + tipoE1 + " e " + tipoE2, null);
+    }
+    
+    return !tipoE1.isEmpty() ? tipoE1 : tipoE2;
+}   
+    public void emit_declaracao(String id, String tipo, String valor) {
+        indent(); if(dicionario.containsKey(id)) report_fatal_error("Variavel duplicada [" + id + "]",null);
+        dicionario.put(id, new TabelaSimbolo(tipo, false));
+        getBuffer().append(tipo.equalsIgnoreCase("INT") ? "int " : "float ").append(id);
+        if (valor != null) getBuffer().append(" = ").append(valor); getBuffer().append(";\n");
+    }
+    public void emit_declaracao_vetor(String tipo, String id, String tamanho) {
+        indent(); if(dicionario.containsKey(id)) report_fatal_error("Variavel duplicada [" + id + "]", null);
+        dicionario.put(id, new TabelaSimbolo(tipo, true));
+        getBuffer().append(tipo.equalsIgnoreCase("INT") ? "int " : "float ").append(id).append("[").append(tamanho).append("];\n");
+    }
+    public void emit_atribuicao(String id, String valor){ checarUsoCorretoVetores(id); indent(); getBuffer().append(id).append(" = ").append(valor).append(";\n"); }
+    public void emit_leia(String id){
+        checarUsoCorretoVetores(id); indent(); TabelaSimbolo t1 = dicionario.get(id.contains("[") ? id.substring(0, id.indexOf('[')) : id);
+        getBuffer().append("scanf(").append(t1.getTipo().equals("INT") ? "\"%d\"" : "\"%f\"").append(", &").append(id).append(");\n");
+    }
+    public void emit_escreva(String content, boolean newline) {
+        indent();
+        if (content.startsWith("\"")) { getBuffer().append("printf(").append(content).append(newline ? ", \"\\n\"" : "").append(");\n");
+        } else {
+            String tipo = checkExpr(content, null); String format = tipo.equals("INT") ? "%d" : "%f"; if (newline) format += "\\n";
+            getBuffer().append("printf(\"").append(format).append("\", ").append(content).append(");\n");
+        }
+    }
+    public void emit_bloco_inicio() { indent(); getBuffer().append("{\n"); indent_level++; }
+    public void emit_bloco_fim() { indent_level--; indent(); getBuffer().append("}\n"); }
+    public void emit_if(String cond) { indent(); getBuffer().append("if (").append(cond).append(")\n"); }
+    public void emit_else() { indent_level--; indent(); getBuffer().append("} else\n"); }
+    public void emit_while(String cond) { indent(); getBuffer().append("while (").append(cond).append(")\n"); }
+    public void emit_for(String id, String de, String ate, String passo) {
+        indent(); checarVariavelNaoDeclarada(id); boolean neg = false; try { if (Integer.parseInt(passo) < 0) neg = true; } catch (Exception e) {}
+        getBuffer().append("for (").append(id).append(" = ").append(de).append("; ").append(id).append(neg ? " >= " : " <= ").append(ate).append("; ").append(id).append(" += ").append(passo).append(")\n");
+    }
+    public void emit_function_header(String tipo, String id) { functionsCode.append("\n").append(tipo.equalsIgnoreCase("INT") ? "int " : "float ").append(id).append("() \n"); }
+:};
+
+terminal PLUS, MINUS, TIMES, DIVIDE, LPAREN, RPAREN, LBRCKT, RBRCKT, EQUALS, GREATER, LESS;
+terminal PROGRAM, STARTPRG, ENDPRG, READLINE, WRITELINE, WRITELN, DECLINT, DECLFLOAT, SEMI;
+terminal E, OU, NAO, IFF, THENN, ELSEE, ENDELSE, ATTRIB, PARA, DE, ATE, PASSO, FACA, FIMPARA;
+terminal ENQUANTO, FIMENQUANTO, PROCEDIMENTO, UNARY;
+
+terminal String ID, INTT, FLOATT, STRING_LITERAL;
+
+non terminal program, list_command, command, assign, declare_variable, writel, writeln, readl, if_stmt, else_part, for_stmt, while_stmt;
+non terminal proc_declaration, list_proc_declaration;
+non terminal String expr, tipo, vetor;
+
+precedence left E, OU;
+precedence nonassoc NAO;
+precedence nonassoc EQUALS, GREATER, LESS;
+precedence left PLUS, MINUS;
+precedence left TIMES, DIVIDE;
+precedence left UNARY;
+
+start with program;
+
+program ::= list_proc_declaration PROGRAM STARTPRG list_command ENDPRG {: emit_final_code(); :};
+list_proc_declaration ::= list_proc_declaration proc_declaration | /* empty */;
+proc_declaration ::= PROCEDIMENTO tipo:t ID:id LPAREN RPAREN 
+                     {: parsingFunction = true; emit_function_header(t, id); :}
+                     STARTPRG {: emit_bloco_inicio(); :} list_command ENDPRG {: emit_bloco_fim(); parsingFunction = false; :};
+list_command ::= list_command command | /* empty */;
+command ::= declare_variable | assign | readl | writel | writeln | if_stmt | for_stmt | while_stmt;
+tipo ::= DECLINT:t {: RESULT = "INT"; :} | DECLFLOAT:t {: RESULT = "FLOAT"; :};
+declare_variable ::= tipo:t ID:id SEMI {: emit_declaracao(id, t, null); :}
+                   | tipo:t ID:id ATTRIB expr:v SEMI {: emit_declaracao(id, t, v); :}
+                   | tipo:t vetor:v SEMI {: String id = pilhaAuxiliar.pop(); String tam = pilhaAuxiliar.pop(); emit_declaracao_vetor(t, id, tam); :};
+vetor ::= ID:i LBRCKT expr:z RBRCKT {: pilhaAuxiliar.push(z); pilhaAuxiliar.push(i); :};
+assign ::= ID:id ATTRIB expr:v SEMI {: emit_atribuicao(id, v); :}
+         | ID:i LBRCKT expr:idx RBRCKT ATTRIB expr:v SEMI {: emit_atribuicao(i+"["+idx+"]", v); :};
+readl ::= READLINE expr:id SEMI {: emit_leia(id); :};
+writel ::= WRITELINE expr:v SEMI {: emit_escreva(v, false); :}
+         | WRITELINE STRING_LITERAL:s SEMI {: emit_escreva("\"" + s + "\"", false); :};
+writeln ::= WRITELN expr:v SEMI {: emit_escreva(v, true); :}
+          | WRITELN STRING_LITERAL:s SEMI {: emit_escreva("\"" + s + "\"", true); :};
+if_stmt ::= IFF expr:cond THENN {: emit_if(cond); :}
+            {: emit_bloco_inicio(); :} list_command else_part ENDELSE;
+else_part ::= ELSEE {: emit_else(); emit_bloco_inicio(); :} list_command {: emit_bloco_fim(); :}
+            | {: emit_bloco_fim(); :}; 
+for_stmt ::= PARA ID:id DE expr:d ATE expr:a PASSO expr:p FACA 
+             {: emit_for(id, d, a, p); :}
+             {: emit_bloco_inicio(); :} list_command FIMPARA {: emit_bloco_fim(); :};
+while_stmt ::= ENQUANTO expr:cond FACA {: emit_while(cond); :}
+               {: emit_bloco_inicio(); :} list_command FIMENQUANTO {: emit_bloco_fim(); :};
+expr ::= expr:e1 PLUS expr:e2      {: RESULT = e1 + " + " + e2; checkExpr(e1, e2); :}
+       | expr:e1 MINUS expr:e2     {: RESULT = e1 + " - " + e2; checkExpr(e1, e2); :}
+       | expr:e1 TIMES expr:e2     {: RESULT = e1 + " * " + e2; checkExpr(e1, e2); :}
+       | expr:e1 DIVIDE expr:e2    {: RESULT = e1 + " / " + e2; checkExpr(e1, e2); :}
+       | expr:e1 EQUALS expr:e2    {: RESULT = e1 + " == " + e2; checkExpr(e1, e2); :}
+       | expr:e1 GREATER expr:e2   {: RESULT = e1 + " > " + e2; checkExpr(e1, e2); :}
+       | expr:e1 LESS expr:e2      {: RESULT = e1 + " < " + e2; checkExpr(e1, e2); :}
+       | expr:e1 E expr:e2         {: RESULT = e1 + " && " + e2; checkExpr(e1, e2); :}
+       | expr:e1 OU expr:e2        {: RESULT = e1 + " || " + e2; checkExpr(e1, e2); :}
+       | NAO expr:e1               {: RESULT = "!" + e1; checkExpr(e1, null); :} %prec NAO
+       | MINUS expr:e1             {: RESULT = "-" + e1; checkExpr(e1, null); :} %prec UNARY
+       | LPAREN expr:e1 RPAREN     {: RESULT = "(" + e1 + ")"; :}
+       | ID:i LBRCKT expr:idx RBRCKT {: RESULT = i + "[" + idx + "]"; checkExpr(RESULT, null); :}
+       | ID:i                      {: RESULT = i; checkExpr(i, null); :}
+       | INTT:n                    {: RESULT = n; :}
+       | FLOATT:n                  {: RESULT = n; :};

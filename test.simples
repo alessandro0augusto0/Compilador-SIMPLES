@@ -1,0 +1,64 @@
+/* Programa de teste completo para a linguagem SIMPLES */
+
+procedimento inteiro calcula_dobro()
+inicio
+    escreval "--- Dentro da funcao calcula_dobro ---";
+    escreva "Esta funcao vai retornar 100";
+    escreval ""; /* Apenas para pular linha */
+    /* retorne 100; -- funcionalidade de retorno nao implementada */
+fim
+
+programa
+inicio
+    inteiro a;
+    inteiro b <- 10;
+    flutuante c;
+    inteiro i;
+    inteiro meu_vetor[5];
+    
+    escreval "Projeto Final de Compiladores!";
+    escreval "==============================";
+    
+    escreva "Digite um valor inteiro para 'a': ";
+    leia a;
+    
+    escreva "Digite um valor flutuante para 'c': ";
+    leia c;
+    
+    escreval "--- Testando Atribuicoes e Vetores ---";
+    meu_vetor[0] <- a;
+    meu_vetor[1] <- b;
+    meu_vetor[4] <- meu_vetor[0] + meu_vetor[1];
+    
+    escreva "Valor em meu_vetor[4] (a+b): ";
+    escreval meu_vetor[4];
+    
+    escreval "--- Testando FOR com passo positivo ---";
+    para i de 0 ate 4 passo 1 faca
+        escreva "vetor[";
+        escreva i;
+        escreva "]: ";
+        escreval meu_vetor[i];
+    fimpara
+    
+    escreval "--- Testando FOR com passo negativo ---";
+    para i de 4 ate 0 passo -1 faca
+        escreval i;
+    fimpara
+    
+    escreval "--- Testando IF/ELSE ---";
+    se a > 10 entao
+        escreval "A variavel 'a' e maior que 10.";
+    senao
+        escreval "A variavel 'a' nao e maior que 10.";
+    fimse
+    
+    escreval "--- Testando WHILE ---";
+    b <- 3;
+    enquanto b > 0 faca
+        escreval b;
+        b <- b - 1;
+    fimenquanto
+    
+    escreval "Fim do programa.";
+fim
