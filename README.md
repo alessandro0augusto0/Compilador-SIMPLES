@@ -385,10 +385,3 @@ C:.
 ## 📄 Licença
 
 Distribuído sob licença MIT. Veja [LICENSE](LICENSE) para detalhes.
-
-### 👨‍💻 IDEs & Ferramentas de Desenvolvimento
-<p align="center">
-  <a href="https://skillicons.dev">
-    <img src="https://skillicons.dev/icons?i=vscode,idea,eclipse,phpstorm,pycharm,git,github,figma,pr,docker" />
-  </a>
-</p>
