@@ -201,7 +201,13 @@ int main() {
 
 ## 🚀 Como Executar
 
-### Pré-requisitos
+Você pode executar o compilador SIMPLES de duas formas: **manual** (passo a passo) ou **automatizada** (usando um script). Escolha a que preferir!
+
+---
+
+### 🛠️ Opção 1: Execução Manual (Passo a Passo)
+
+#### Pré-requisitos
 
 <p align="center">
     <a href="https://www.docker.com/">
@@ -243,76 +249,83 @@ Este projeto foi desenvolvido como trabalho final da disciplina de Compiladores,
 5. **Testes e exemplos**: Inclusão de arquivos de teste e exemplos práticos para validação do compilador.
 6. **Documentação**: Elaboração deste README para orientar o uso e a contribuição.
 
-### Passo a Passo
-#### 1. Clone o Repositório
+#### Passo a Passo
 
-Clone o repositório e acesse a pasta do projeto:
+1. **Clone o Repositório**
 
-```bash
-git clone https://github.com/alessandro0augusto0/Compilador-SIMPLES.git
-```
+   ```bash
+   git clone https://github.com/alessandro0augusto0/Compilador-SIMPLES.git
+   cd Compilador-SIMPLES
+   ```
 
-```bash
-cd Compilador-SIMPLES
-```
+2. **Construa a Imagem Docker**
+
+   ```bash
+   docker build -t compilador-ambiente .
+   ```
+
+3. **Inicie o Container e Entre Nele**
+
+   ```bash
+   docker run -it --rm -v "$(pwd):/app" compilador-ambiente bash
+   ```
+
+4. **Execute o Processo de Compilação (Dentro do Container)**
+
+    ```bash
+    cd /app
+    ```
+    ```bash
+    ant
+    ```
+    ```bash
+    java -cp "build/jar/simples-compiler.jar:lib/java-cup-11b-runtime.jar" CompiladorSimples test.simples > test.c
+    ```
+    ```bash
+    gcc test.c -o programa_final
+    ```
+    ```bash
+    ./programa_final
+    ```
 
 ---
 
-#### 2. Construa a Imagem Docker
+### ⚡ Opção 2: Execução Automatizada (Recomendada)
 
-Crie a imagem Docker com todas as dependências:
+Se quiser simplificar ainda mais, use o script pronto para automatizar tudo!
 
-```bash
-docker build -t compilador-ambiente .
-```
-
----
-
-#### 3. Inicie o Container e Entre Nele
-
-Inicie o container e espelhe a pasta do projeto:
+#### 1. Inicie o Container Docker normalmente
 
 ```bash
 docker run -it --rm -v "$(pwd):/app" compilador-ambiente bash
 ```
 
----
-
-#### 4. Execute o Processo de Compilação (Dentro do Container)
-
-Dentro do container, execute os comandos abaixo, um por vez:
-
-Navegue até a pasta do projeto:
+#### 2. Dê permissão de execução ao script (apenas na primeira vez)
 
 ```bash
 cd /app
 ```
-
-Compile o compilador (gera o .jar):
-
 ```bash
-ant
+chmod +x compilar_e_rodar.sh
 ```
 
-Use o compilador para traduzir o código SIMPLES para C:
+#### 3. Execute o script para compilar e rodar seu arquivo `.simples` de uma só vez
 
 ```bash
-java -cp "build/jar/simples-compiler.jar:lib/java-cup-11b-runtime.jar" CompiladorSimples test.simples > test.c
+./compilar_e_rodar.sh test.simples
 ```
 
-Compile o código C gerado com o GCC:
+O script faz automaticamente:
 
-```bash
-gcc test.c -o programa_final
-```
-
-Execute o programa final:
-
-```bash
-./programa_final
-```
+- Build do compilador (`ant`)
+- Tradução do código SIMPLES para C
+- Compilação do código C com GCC
+- Execução do programa final
 
 ---
+
+Escolha a opção que preferir e aproveite para testar seu código SIMPLES de forma prática e rápida!
+
 
 ## 📂 Estrutura do Projeto
 
@@ -380,3 +393,5 @@ C:.
 ## 📄 Licença
 
 Distribuído sob licença MIT. Veja [LICENSE](LICENSE) para detalhes.
+
+---
